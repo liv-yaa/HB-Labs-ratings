@@ -10,7 +10,7 @@ from server import app
 import datetime
 
 
-def load_users():
+def load_users(user_file):
     """Load users from u.user into database."""
 
     print("Users")
@@ -20,7 +20,7 @@ def load_users():
     User.query.delete()
 
     # Read u.user file and insert data
-    for row in open("seed_data/u.user"):
+    for row in open(user_file):
         row = row.rstrip()
         user_id, age, gender, occupation, zipcode = row.split("|")
 
@@ -35,7 +35,7 @@ def load_users():
     db.session.commit()
 
 
-def load_movies():
+def load_movies(movie_file):
     """Load movies from u.item into database."""
 
     print("Movies")
@@ -45,7 +45,7 @@ def load_movies():
     Movie.query.delete()
 
     # Read u.user file and insert data
-    for row in open("seed_data/u.item"):
+    for row in open(movie_file):
         row = row.rstrip()
 
         row_list = row.split("|")
@@ -72,7 +72,7 @@ def load_movies():
     # Once we're done, we should commit our work
     db.session.commit()
 
-def load_ratings():
+def load_ratings(rating_file):
     """Load ratings from u.data into database."""
     print("Ratings")
 
@@ -81,7 +81,7 @@ def load_ratings():
     Rating.query.delete()
 
     # Read u.user file and insert data
-    for row in open("seed_data/u.data"):
+    for row in open(rating_file):
         row = row.rstrip()
         user_id, movie_id, score = row.split("\t")[:-1] # user_id \t movie_id \t score \t timestamp.
         
@@ -130,7 +130,8 @@ if __name__ == "__main__":
     db.create_all()
 
     # Import different types of data
-    load_users()
-    load_movies()
-    load_ratings()
+    load_users("seed_data/u.user")
+    load_movies("seed_data/u.item")
+    load_ratings("seed_data/u.data")
     set_val_user_id()
+    set_val_movie_id()
