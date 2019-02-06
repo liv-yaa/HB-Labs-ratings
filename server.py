@@ -2,7 +2,7 @@
 
 from jinja2 import StrictUndefined
 
-from flask import (Flask, render_template, redirect, request, flash, session)
+from flask import (Flask, render_template, redirect, request, flash, session, jsonify)
 from flask_debugtoolbar import DebugToolbarExtension
 
 from model import User, Rating, Movie, connect_to_db, db
@@ -32,35 +32,41 @@ def user_list():
     users = User.query.all()
     return render_template('user_list.html', users=users)
 
+
+@app.route('/users/<int:user_id>')
+def user_info(user_id):
+    """ Show list of movies from one user given user id."""
+
+    movies = db.session.query(User.user_id)
+
+    user = User.query.get(user_id)
+    ratings = Rating.query.filter_by(user_id=user.user_id).all()
+    # movies = []
+
+    # for r in ratings:
+    #     movie = Movie.query.get(r.movie_id)
+    #     movies.append(movie)
+
+
+    return render_template('user_info.html', user=user, ratings=ratings)
+
+
 @app.route('/register', methods=["GET"])
 def register_form():
-    
-    # # Process registration form, 
-    # email_address = request.form.get('email')
-    # password = request.form.get('password')
-
-    # #check if user with email address exists.
-    # addresses = User.query.filter_by(email=email_address).all()
-
-    # # If not, create a new user in the database.
-    # if addresses == []:
-    #     User(email_address, password)
-    #     db.session.commit()
-    # else:
-    #     # Flash message
-    #     flash('That email address has already been used')
-    #     return redirect('register_form.html')
+    """ """
 
     return render_template('register_form.html')
 
+
 @app.route('/register', methods=["POST"])
 def register_process():
+    """ """
 
     # Process registration form, 
     email_address = request.form.get('email')
     password = request.form.get('password')
 
-    #check if user with email address exists.
+    # check if user with email address exists.
     addresses = User.query.filter_by(email=email_address).all()
 
     # If not, create a new user in the database.
@@ -69,14 +75,73 @@ def register_process():
         return redirect('/register')
 
     elif addresses == []:
-        User(email_address, password)
+        new_user = User(email=email_address, password=password)
+        db.session.add(new_user)
         db.session.commit()
+        session['user'] = new_user.email
+        flash(f"Logged in as {email_address}.")
+        return redirect('/')
+
+
     else:
         # Flash message
         flash('That email address has already been used')
         return redirect('/register')
 
-    return redirect('/')
+    return redirect('/login')
+
+@app.route('/login', methods=["GET"])
+def login_form():
+    """ Get method for the route that handles submission of the login form. """
+
+    return render_template('login_form.html')
+
+@app.route('/login', methods=["POST"])
+def login_process():
+    """ """
+    
+    # Process registration form, 
+    email_address = request.form.get('email')
+    typed_password = request.form.get('password')
+
+    # check if user with email address exists.
+    login_user = User.query.filter_by(email=email_address, 
+                                    password=typed_password).first()
+
+    # print(login_user)
+
+
+    # If the user correctly logs in.
+    if login_user:
+        session['user'] = login_user.email
+        flash(f"Logged in as {email_address}.")
+        return redirect('/')
+
+
+    else:
+        # Flash message
+        flash('That does not match any email-password combinations in our database.')
+        return redirect('/login')
+
+    # return redirect('/')
+
+@app.route('/logout', methods=["POST"])
+def logout_process():
+    """ """
+
+    # If the user is already logged in.
+    if session['user']:
+        # Set the user from the session to None:
+        session['user'] = None
+        flash(f"Logged out.")
+        return redirect('/')
+
+
+    else:
+        # Flash message
+        flash('No one is logged in currently.')
+        return redirect('/login')
+
 
 
 if __name__ == "__main__":
