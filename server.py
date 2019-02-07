@@ -4,6 +4,7 @@ from jinja2 import StrictUndefined
 
 from flask import (Flask, render_template, redirect, request, flash, session, jsonify)
 from flask_debugtoolbar import DebugToolbarExtension
+from numpy import mean
 
 from model import User, Rating, Movie, connect_to_db, db
 
@@ -37,18 +38,70 @@ def user_list():
 def user_info(user_id):
     """ Show list of movies from one user given user id."""
 
-    movies = db.session.query(User.user_id)
-
     user = User.query.get(user_id)
     ratings = Rating.query.filter_by(user_id=user.user_id).all()
-    # movies = []
-
-    # for r in ratings:
-    #     movie = Movie.query.get(r.movie_id)
-    #     movies.append(movie)
 
 
     return render_template('user_info.html', user=user, ratings=ratings)
+
+
+@app.route('/movies')
+def movie_list():
+    """Show list of movies."""
+
+    movies = Movie.query.order_by('title').all()
+    return render_template('movie_list.html', movies=movies)
+
+
+@app.route('/movies/<int:movie_id>')
+def movie_info(movie_id):
+    """ Show list of ratings from one movie given movie_id."""
+
+    movie = Movie.query.get(movie_id)
+    ratings = Rating.query.filter_by(movie_id=movie.movie_id).all()
+    # average_score = mean(ratings)
+    # print('\n\n\n\n\n\n\n')
+    # print(average_score)
+
+
+    return render_template('movie_info.html', movie=movie, ratings=ratings)
+
+@app.route('/submit-rating', methods=["POST"])
+def submit_rating():
+    """ Gets user input of movie rating and posts it to the Ratings database """
+
+    movie_id = request.form.get("movie_id")
+    score = request.form.get("rating")
+
+    # Get the user id from the session
+    email_address = session['user']
+    user_id = User.query.filter_by(email=email_address).one().user_id
+    
+    ratings_obj = Rating.query.filter_by(movie_id=movie_id, user_id=user_id).first()
+
+    if ratings_obj:
+
+        # Update existing rating
+        ratings_obj.score = score
+        db.session.commit()
+
+        print("Score updated to " + score)
+
+        flash('You have successfully updated your rating for this movie')
+
+
+    else:
+    # Create a new rating object and add it to the database
+        new_rating = Rating(movie_id=movie_id, user_id=user_id, score=score)
+
+        db.session.add(new_rating)
+        db.session.commit()
+
+        flash('You have successfully rated a new movie')
+
+    return redirect('/movies/' + movie_id)
+
+
 
 
 @app.route('/register', methods=["GET"])
@@ -90,11 +143,13 @@ def register_process():
 
     return redirect('/login')
 
+
 @app.route('/login', methods=["GET"])
 def login_form():
     """ Get method for the route that handles submission of the login form. """
 
     return render_template('login_form.html')
+
 
 @app.route('/login', methods=["POST"])
 def login_process():

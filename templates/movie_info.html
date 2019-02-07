@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+  <h2>Movie Ratings and Information</h2>
+
+
+
+  <ul>
+    <li>Movie Title: {{ movie.title }}</li>
+    <li>Release Date: {{ movie.released_at.strftime("%Y") }}</li>
+    <li>IMDB URL: {{ movie.imdb_url }}</li>
+  </ul>
+
+{% if session.get('user') %}
+
+  <form action="/submit-rating" id="movie_id" method="POST">
+
+    <label> Enter your rating for this movie:
+      <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
+      <input type="text" name="rating" id="rating">
+    </label>
+    <input type="submit" value="Submit Rating">
+  </form> 
+
+
+
+  <script>
+
+    "use strict";
+
+
+    $('#movie_id').on('submit', function (evt) {
+      let input_str = $('#rating').val();
+      console.log(input_str);
+
+
+      let input_num = Number(input_str);
+
+      if ((input_num <= 5) & (input_num >= 1)) {
+        return input_num;
+
+      }
+
+      else {
+        alert('Hey, thats not valid.');
+        evt.preventDefault();
+      }
+
+
+
+    });
+  </script>
+
+{% endif %}
+
+  <ul>
+    {% for rating in ratings %}
+      <li>
+        {{ rating.score }}
+      </li>
+    {% endfor %}
+  </ul>
+
+
+
+{% endblock %}
