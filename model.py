@@ -1,6 +1,7 @@
 """Models and database functions for Ratings project."""
 
 from flask_sqlalchemy import SQLAlchemy
+import correlation
 
 # This is the connection to the PostgreSQL database; we're getting this through
 # the Flask-SQLAlchemy helper library. On this, we can find the `session`
@@ -50,6 +51,36 @@ class User(db.Model):
 
         else:
             return 0.0
+
+
+    def predict_rating(self, movie):
+        """ """
+
+        other_ratings = movie.ratings
+        # other_users = [ r.user for r in other_ratings ]
+
+        similarities = [
+            (self.similarity(r.user), r)
+            for r in other_ratings
+        ]
+
+        similarities.sort(reverse=True, key=lambda x: x[0])
+
+        # sim, rating = similarities[0]
+        similarities = [(sim, r) for sim, r in similarities
+                        if sim > 0]
+
+        if not similarities:
+            return None
+
+        numerator = sum([r.score * sim for sim, r in similarities])
+        denominator = sum([sim for sim, r in similarities])
+
+        # for rating in other_ratings:
+        #     if rating.user_id == best_match_user.user_id:
+        return numerator / denominator
+
+
 
 
 # Put your Movie and Rating model classes here.

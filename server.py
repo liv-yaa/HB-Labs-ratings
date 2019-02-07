@@ -59,9 +59,26 @@ def movie_info(movie_id):
 
     movie = Movie.query.get(movie_id)
     ratings = Rating.query.filter_by(movie_id=movie.movie_id).all()
-    # average_score = mean(ratings)
-    # print('\n\n\n\n\n\n\n')
-    # print(average_score)
+
+    user_id = session.get("user_id")
+
+    if user_id:
+        user_rating = Rating.query.filter_by(
+            movie_id=movie_id, user_id=user_id).first()
+
+    else:
+        user_rating = None
+
+    # Get avg rating of movie (Forther study)
+    rating_scores = [r.score for r in movie.ratings]
+    avg_rating = float(sum(rating_scores)) / len(rating_scores)
+
+    prediction = None
+
+    if (not user_rating) and user_id:
+        user = User.query.get(user_id)
+        if user:
+            prediction = user.predict_rating(movie)
 
 
     return render_template('movie_info.html', movie=movie, ratings=ratings)
