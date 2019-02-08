@@ -106,18 +106,22 @@ def movie_info(movie_id):
     elif user_rating:
         effective_rating = user_rating.score
 
+    # If no prediction and no user_rating yet:
     else:
         effective_rating = None
 
-
+    # Get this user object by email
     the_eye = (User.query.filter_by(email="the-eye@of-judgement.com").one())
 
+    # Get thet eye's rating of this movie
     eye_rating = Rating.query.filter_by(
         user_id=the_eye.user_id, movie_id=movie.movie_id).first()
 
+    # If the eye rating is None
     if eye_rating is None:
         eye_rating = the_eye.predict_rating(movie)
 
+    
     else:
         eye_rating = eye_rating.score
 

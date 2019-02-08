@@ -1,0 +1,22 @@
+.container-fluid {
+    background-color: #6ef10b;
+}
+
+html {
+    font-family: serif;
+
+}
+
+body {
+    font-family: monospace;
+    font-size: 100px;
+
+    background-image: url("https://openclipart.org/download/223315/maze-against-evil-eye.svg");
+    /*background-repeat: no-repeat;*/
+    background-size: auto;
+
+}   
+
+h2 {
+    background-color: red;
+}
