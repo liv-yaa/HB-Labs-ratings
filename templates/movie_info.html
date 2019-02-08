@@ -11,9 +11,17 @@
     <li>Movie Title: {{ movie.title }}</li>
     <li>Release Date: {{ movie.released_at.strftime("%Y") }}</li>
     <li>IMDB URL: {{ movie.imdb_url }}</li>
+    <li>Average rating: {{ average }}</li>
   </ul>
 
+  {% if prediction %}
+    <p> We predict you will rate this movie {{ prediction }}.</p>
+
+  {% endif %}
+
 {% if session.get('user') %}
+
+
 
   <form action="/submit-rating" id="movie_id" method="POST">
 
@@ -55,13 +63,7 @@
 
 {% endif %}
 
-  <ul>
-    {% for rating in ratings %}
-      <li>
-        {{ rating.score }}
-      </li>
-    {% endfor %}
-  </ul>
+
 
 
 

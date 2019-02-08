@@ -19,6 +19,16 @@ app.secret_key = "ABC"
 # error.
 app.jinja_env.undefined = StrictUndefined
 
+BERATEMENT_MESSAGES = [
+    "I suppose you don't have such bad taste after all.",
+    "I regret every decision that I've ever made that has " +
+        "brought me to listen to your opinion.",
+    "Words fail me, as your taste in movies has clearly " +
+        "failed you.",
+    "That movie is great. For a clown to watch. Idiot.",
+    "Words cannot express the awfulness of your taste."
+]
+
 
 @app.route('/')
 def index():
@@ -60,13 +70,18 @@ def movie_info(movie_id):
     movie = Movie.query.get(movie_id)
     ratings = Rating.query.filter_by(movie_id=movie.movie_id).all()
 
-    user_id = session.get("user_id")
+    user_email = session.get("user")
+    user_id = User.query.filter_by(email=user_email).one().user_id
+    # print('user_id is', user_id)
 
-    if user_id:
+    if user_email:
+        # print('in if user_id', user_email)
         user_rating = Rating.query.filter_by(
-            movie_id=movie_id, user_id=user_id).first()
+            movie_id=movie.movie_id, user_id=user_id).first()
+        # print('user_rating is', user_rating)
 
     else:
+        # print('in else, user_rating is None')
         user_rating = None
 
     # Get avg rating of movie (Forther study)
@@ -75,13 +90,55 @@ def movie_info(movie_id):
 
     prediction = None
 
-    if (not user_rating) and user_id:
+    if (not user_rating) and user_email:
+        # print('in complex if')
         user = User.query.get(user_id)
+        # print('user is', user)
         if user:
+            # print('in if user')
             prediction = user.predict_rating(movie)
+            # print('prediction is', prediction)
+
+    # Evil Eye
+    if prediction:
+        effective_rating = prediction
+
+    elif user_rating:
+        effective_rating = user_rating.score
+
+    else:
+        effective_rating = None
 
 
-    return render_template('movie_info.html', movie=movie, ratings=ratings)
+    the_eye = (User.query.filter_by(email="the-eye@of-judgement.com").one())
+
+    eye_rating = Rating.query.filter_by(
+        user_id=the_eye.user_id, movie_id=movie.movie_id).first()
+
+    if eye_rating is None:
+        eye_rating = the_eye.predict_rating(movie)
+
+    else:
+        eye_rating = eye_rating.score
+
+    if eye_rating and effective_rating:
+        difference = abs(eye_rating - effective_rating)
+
+    else:
+        difference = None
+
+
+    # Beratement
+    if difference:
+        beratement = BERATEMENT_MESSAGES[int(difference)]
+
+    else:
+        beratement = None
+
+    flash(beratement)
+
+    return render_template('movie_info.html', movie=movie, user_rating=user_rating,
+                            average=avg_rating, prediction=prediction, beratement=beratement)
 
 @app.route('/submit-rating', methods=["POST"])
 def submit_rating():
